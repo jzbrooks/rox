@@ -10,11 +10,12 @@ pub enum OpCode {
 pub struct Chunk {
 	code: Vec<OpCode>,
 	constants: Vec<Value>,
+	lines: Vec<u32>, // todo: run-length encoding?
 }
 
 impl Chunk {
-	pub fn new(code: Vec<OpCode>, constants: Vec<Value>) -> Chunk {
-		Chunk { code, constants }
+	pub fn new(code: Vec<OpCode>, constants: Vec<Value>, lines: Vec<u32>) -> Chunk {
+		Chunk { code, constants, lines }
 	}
 
 	pub fn disassemble(&self, description: &str) {
@@ -27,6 +28,12 @@ impl Chunk {
 
 	fn disassemble_instruction(&self, op: &OpCode, offset: usize) {
 	    print!("{offset:>0width$} ", offset = offset, width = 4);
+
+	    if offset > 0 && self.lines[offset] == self.lines[offset - 1] {
+			print!("   | ");
+		} else {
+		    print!("{line:>width$} ", line = self.lines[offset], width = 4);
+		}
 
 	    match op {
 	        OpCode::Return => println!("OP_RETURN"),
