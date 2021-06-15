@@ -28,8 +28,11 @@ impl VM {
 	}
 
 	fn run(&mut self) -> InterpretResult {
+		let chunk = &self.chunk.as_ref().unwrap();
+		println!("{:?}", self.stack);
+		chunk.disassemble("test");
+
 		loop {
-			let chunk = &self.chunk.as_ref().unwrap();
 			let op = &chunk.code[self.ip];
 			self.ip += 1;
 

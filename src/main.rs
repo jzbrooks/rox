@@ -15,8 +15,6 @@ fn main() {
         vec!(5.0),
         vec!(123, 123, 123)
     );
-    chunk.disassemble("test");
     let mut vm = VM::new();
-    println!("Interpret result: {:?}", vm.interpret(chunk));
-    println!("VM state: {:?}", vm);
+    vm.interpret(chunk);
 }
