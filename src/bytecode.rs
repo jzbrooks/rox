@@ -3,13 +3,14 @@ pub type Value = f64;
 #[derive(Debug)]
 pub enum OpCode {
 	Constant(usize),
+	Negate,
 	Return,
 }
 
 #[derive(Debug)]
 pub struct Chunk {
-	code: Vec<OpCode>,
-	constants: Vec<Value>,
+	pub code: Vec<OpCode>,
+	pub constants: Vec<Value>,
 	lines: Vec<u32>, // todo: run-length encoding?
 }
 
@@ -36,6 +37,7 @@ impl Chunk {
 		}
 
 	    match op {
+	    	OpCode::Negate => println!("OP_NEGATE"),
 	        OpCode::Return => println!("OP_RETURN"),
 	        OpCode::Constant(_) => self.constant_instruction(op),
 	    }
