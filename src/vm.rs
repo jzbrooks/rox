@@ -37,6 +37,26 @@ impl VM {
 			self.ip += 1;
 
 			match op {
+				OpCode::Add => {
+					let a = self.stack.pop().unwrap();
+					let b = self.stack.pop().unwrap();
+					self.stack.push(a + b);
+				}
+				OpCode::Subtract => {
+					let a = self.stack.pop().unwrap();
+					let b = self.stack.pop().unwrap();
+					self.stack.push(a - b);
+				},
+				OpCode::Multiply => {
+					let a = self.stack.pop().unwrap();
+					let b = self.stack.pop().unwrap();
+					self.stack.push(a * b);
+				},
+				OpCode::Divide => {
+					let a = self.stack.pop().unwrap();
+					let b = self.stack.pop().unwrap();
+					self.stack.push(a / b);
+				},
 				OpCode::Negate => {
 					let negation = -self.stack.pop().unwrap();
 					self.stack.push(negation);		

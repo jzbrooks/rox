@@ -2,6 +2,10 @@ pub type Value = f64;
 
 #[derive(Debug)]
 pub enum OpCode {
+	Add,
+	Subtract,
+	Multiply,
+	Divide,
 	Constant(usize),
 	Negate,
 	Return,
@@ -37,6 +41,10 @@ impl Chunk {
 		}
 
 	    match op {
+			OpCode::Add => println!("OP_ADD"),
+			OpCode::Subtract => println!("OP_SUBTRACT"),
+			OpCode::Multiply => println!("OP_MULTIPLY"),
+			OpCode::Divide => println!("OP_DIVIDE"),
 	    	OpCode::Negate => println!("OP_NEGATE"),
 	        OpCode::Return => println!("OP_RETURN"),
 	        OpCode::Constant(_) => self.constant_instruction(op),
