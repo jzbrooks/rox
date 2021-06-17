@@ -32,31 +32,26 @@ impl VM {
 		println!("{:?}", self.stack);
 		chunk.disassemble("test");
 
+		macro_rules! binop {
+			($op:tt) => {
+				{
+					let a = self.stack.pop().unwrap();
+					let b = self.stack.pop().unwrap();
+					let c = a $op b;
+					self.stack.push(c);
+				}
+			}
+		}
+
 		loop {
 			let op = &chunk.code[self.ip];
 			self.ip += 1;
 
 			match op {
-				OpCode::Add => {
-					let a = self.stack.pop().unwrap();
-					let b = self.stack.pop().unwrap();
-					self.stack.push(a + b);
-				}
-				OpCode::Subtract => {
-					let a = self.stack.pop().unwrap();
-					let b = self.stack.pop().unwrap();
-					self.stack.push(a - b);
-				},
-				OpCode::Multiply => {
-					let a = self.stack.pop().unwrap();
-					let b = self.stack.pop().unwrap();
-					self.stack.push(a * b);
-				},
-				OpCode::Divide => {
-					let a = self.stack.pop().unwrap();
-					let b = self.stack.pop().unwrap();
-					self.stack.push(a / b);
-				},
+				OpCode::Add => binop!(+),
+				OpCode::Subtract => binop!(-),
+				OpCode::Multiply => binop!(*),
+				OpCode::Divide => binop!(/),
 				OpCode::Negate => {
 					let negation = -self.stack.pop().unwrap();
 					self.stack.push(negation);		
