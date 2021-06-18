@@ -1,6 +1,7 @@
 use crate::Chunk;
 use crate::OpCode;
 use crate::bytecode::Value;
+use crate::scanner::Scanner;
 
 #[derive(Debug)]
 pub struct VM {
@@ -21,10 +22,24 @@ impl VM {
 		VM { chunk: None, ip: 0, stack: Vec::<Value>::new() }
 	}
 
+	fn compile(source: &str) -> Option<Chunk> {
+		let mut scanner = Scanner::new(source);
+		let line = -1;
+		loop {
+			let token = scanner.next();
+		}
+		None
+	}
+
 	pub fn interpret(&mut self, chunk: Chunk) -> InterpretResult {
 		self.chunk = Some(chunk);
 		self.ip = 0;
 		self.run()
+	}
+
+	pub fn interpret_source(&mut self, source: &str) -> InterpretResult {
+		let chunk = VM::compile(source);
+		self.interpret(chunk.unwrap())
 	}
 
 	fn run(&mut self) -> InterpretResult {
