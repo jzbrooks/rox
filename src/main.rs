@@ -4,6 +4,8 @@ mod vm;
 
 use bytecode::Chunk;
 use bytecode::OpCode;
+use scanner::Scanner;
+use scanner::TokenKind;
 use std::env;
 use std::fs;
 use std::io;
@@ -12,8 +14,16 @@ use vm::InterpretResult;
 use vm::VM;
 
 fn main() {
+    let mut scanner = Scanner::new("{}  ; .!=");
     let argv: Vec<String> = env::args().collect();
     let argc = argv.len();
+
+    let mut current = scanner.next();
+    println!("{:?}", scanner.next());
+    while current.kind != TokenKind::End {
+        current = scanner.next();
+        println!("{:?}", current);
+    }
 
     let mut vm = VM::new();
 
