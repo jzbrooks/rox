@@ -14,7 +14,7 @@ use vm::InterpretResult;
 use vm::VM;
 
 fn main() {
-    let mut scanner = Scanner::new("{}  ; .!=");
+    let mut scanner = Scanner::new("{}  ; .!=\n;{}\"test\"1000.03");
     let argv: Vec<String> = env::args().collect();
     let argc = argv.len();
 

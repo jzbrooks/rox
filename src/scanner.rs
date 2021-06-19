@@ -22,10 +22,14 @@ impl Scanner {
         self.start = self.current;
 
         if self.start == self.source.len() {
-            return Token::new(TokenKind::End, "".to_string(), 0);
+            return self.make_token(TokenKind::End);
         }
 
-        let c = self.advance();
+        let mut c = self.advance();
+
+        if c.is_ascii_digit() {
+            return self.number();
+        }
 
         return match c {
             '(' => self.make_token(TokenKind::LeftParen),
@@ -71,17 +75,30 @@ impl Scanner {
                 };
                 self.make_token(kind)
             }
-            _ => Token::new(
-                TokenKind::Error,
-                "Unexpected character.".to_string(),
-                self.line,
-            ),
+            '"' => self.string(),
+            _ => self.make_error_token("Unexpected character"),
         };
     }
 
     fn make_token(&self, kind: TokenKind) -> Token {
         let lexeme = &self.source[self.start..self.current];
         Token::new(kind, lexeme.into_iter().collect(), self.line)
+    }
+
+    fn make_error_token(&self, message: &str) -> Token {
+        Token::new(TokenKind::Error, message.to_string(), self.line)
+    }
+
+    fn is_at_end(&self) -> bool {
+        self.current == self.source.len()
+    }
+
+    fn peek(&self) -> char {
+        if self.is_at_end() { '\0' } else { self.source[self.current] }
+    }
+
+    fn peek_next(&self) -> char {
+        if self.source.len() == self.current + 1 { '\0' } else { self.source[self.current + 1] }
     }
 
     fn advance(&mut self) -> char {
@@ -104,17 +121,52 @@ impl Scanner {
     }
 
     fn skip_whitespace(&mut self) {
-        if self.current == self.source.len() {
+        if self.is_at_end() {
             return;
         }
 
         loop {
-            let c = self.source[self.current];
+            let c = self.peek();
             match c {
                 ' ' | '\r' | '\t' => self.current += 1,
-                _ => break,
+                '\n' => {
+                    self.line += 1;
+                    self.advance();
+                }
+                '/' => {
+                    if self.peek_next() == '/' {
+                        while self.peek() != '\n' && !self.is_at_end() { self.advance(); }
+                    } else {
+                        return;
+                    }
+                }
+                _ => return,
             }
         }
+    }
+
+    fn string(&mut self) -> Token {
+        while self.peek() != '"' && !self.is_at_end() {
+            if self.peek() == '\n' { self.line += 1; }
+            self.advance();
+        }
+
+        if self.is_at_end() { return self.make_error_token("Unterminated string."); }
+
+        self.advance();
+        self.make_token(TokenKind::String)
+    }
+
+    fn number(&mut self) -> Token {
+        while self.peek().is_ascii_digit() { self.advance(); }
+
+        if self.peek() == '.' && self.peek_next().is_ascii_digit() {
+            self.advance(); // eat the '.'
+
+            while self.peek().is_ascii_digit() { self.advance(); }
+        }
+
+        self.make_token(TokenKind::Number)
     }
 }
 
