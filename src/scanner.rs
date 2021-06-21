@@ -27,6 +27,10 @@ impl Scanner {
 
         let mut c = self.advance();
 
+        if c.is_ascii_alphabetic() {
+            return self.identifier();
+        }
+
         if c.is_ascii_digit() {
             return self.number();
         }
@@ -167,6 +171,39 @@ impl Scanner {
         }
 
         self.make_token(TokenKind::Number)
+    }
+
+    fn identifier(&mut self) -> Token {
+        while self.peek().is_ascii_alphanumeric() { self.advance(); }
+        self.make_identifier_token()
+    }
+
+    fn make_identifier_token(&self) -> Token {
+        let lexeme: String = self.source[self.start..self.current]
+            .into_iter()
+            .collect();
+
+        let kind = match lexeme.as_str() {
+            "and" => TokenKind::And,
+            "class" => TokenKind::Class,
+            "else" => TokenKind::Else,
+            "false" => TokenKind::False,
+            "for" => TokenKind::False,
+            "fun" => TokenKind::Fun,
+            "if" => TokenKind::If,
+            "nil" => TokenKind::Nil,
+            "or" => TokenKind::Or,
+            "print" => TokenKind::Print,
+            "return" => TokenKind::Return,
+            "super" => TokenKind::Super,
+            "this" => TokenKind::This,
+            "true" => TokenKind::True,
+            "var" => TokenKind::Var,
+            "while" => TokenKind::While,
+            _ => TokenKind::Identifier,
+        };
+
+        Token::new(kind, lexeme, self.line)
     }
 }
 
