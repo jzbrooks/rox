@@ -207,7 +207,7 @@ impl Scanner {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Token {
     pub kind: TokenKind,
     lexeme: String,
@@ -261,5 +261,52 @@ pub enum TokenKind {
 impl Token {
     pub fn new(kind: TokenKind, lexeme: String, line: u16) -> Token {
         Token { kind, lexeme, line }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn identifiers_are_parsed() {
+        let mut scanner = Scanner::new("railroad");
+        assert_eq!(scanner.next(), Token::new(TokenKind::Identifier, String::from("railroad"), 1));
+    }
+
+    #[test]
+    fn keywords_are_parsed() {
+        let mut scanner = Scanner::new("this");
+        assert_eq!(scanner.next(), Token::new(TokenKind::This, String::from("this"), 1));
+    }
+
+    #[test]
+    fn punctuation_is_parsed() {
+        let mut scanner = Scanner::new("{");
+        assert_eq!(scanner.next(), Token::new(TokenKind::LeftBrace, String::from("{"), 1));
+    }
+
+    #[test]
+    fn multicharacter_tokens_are_parsed() {
+        let mut scanner = Scanner::new("!=");
+        assert_eq!(scanner.next(), Token::new(TokenKind::BangEqual, String::from("!="), 1));        
+    }
+
+    #[test]
+    fn whitespace_is_skipped() {
+        let mut scanner = Scanner::new(" love");
+        assert_eq!(scanner.next(), Token::new(TokenKind::Identifier, String::from("love"), 1));
+    }
+
+    #[test]
+    fn comment_is_skipped() {
+        let mut scanner = Scanner::new("// test a comment\ndifficult");
+        assert_eq!(scanner.next(), Token::new(TokenKind::Identifier, String::from("difficult"), 2));
+    }
+
+    #[test]
+    fn newlines_increment_line_number() {
+        let mut scanner = Scanner::new("\n.");
+        assert_eq!(scanner.next(), Token::new(TokenKind::Dot, String::from("."), 2));
     }
 }
