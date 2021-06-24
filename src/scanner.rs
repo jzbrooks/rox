@@ -1,7 +1,7 @@
 #[derive(Debug)]
 pub struct Scanner {
     source: Vec<char>,
-    start: usize,
+    pub start: usize,
     current: usize,
     line: u16,
 }
@@ -98,11 +98,19 @@ impl Scanner {
     }
 
     fn peek(&self) -> char {
-        if self.is_at_end() { '\0' } else { self.source[self.current] }
+        if self.is_at_end() {
+            '\0'
+        } else {
+            self.source[self.current]
+        }
     }
 
     fn peek_next(&self) -> char {
-        if self.source.len() == self.current + 1 { '\0' } else { self.source[self.current + 1] }
+        if self.source.len() == self.current + 1 {
+            '\0'
+        } else {
+            self.source[self.current + 1]
+        }
     }
 
     fn advance(&mut self) -> char {
@@ -139,7 +147,9 @@ impl Scanner {
                 }
                 '/' => {
                     if self.peek_next() == '/' {
-                        while self.peek() != '\n' && !self.is_at_end() { self.advance(); }
+                        while self.peek() != '\n' && !self.is_at_end() {
+                            self.advance();
+                        }
                     } else {
                         return;
                     }
@@ -151,37 +161,45 @@ impl Scanner {
 
     fn string(&mut self) -> Token {
         while self.peek() != '"' && !self.is_at_end() {
-            if self.peek() == '\n' { self.line += 1; }
+            if self.peek() == '\n' {
+                self.line += 1;
+            }
             self.advance();
         }
 
-        if self.is_at_end() { return self.make_error_token("Unterminated string."); }
+        if self.is_at_end() {
+            return self.make_error_token("Unterminated string.");
+        }
 
         self.advance();
         self.make_token(TokenKind::String)
     }
 
     fn number(&mut self) -> Token {
-        while self.peek().is_ascii_digit() { self.advance(); }
+        while self.peek().is_ascii_digit() {
+            self.advance();
+        }
 
         if self.peek() == '.' && self.peek_next().is_ascii_digit() {
             self.advance(); // eat the '.'
 
-            while self.peek().is_ascii_digit() { self.advance(); }
+            while self.peek().is_ascii_digit() {
+                self.advance();
+            }
         }
 
         self.make_token(TokenKind::Number)
     }
 
     fn identifier(&mut self) -> Token {
-        while self.peek().is_ascii_alphanumeric() { self.advance(); }
+        while self.peek().is_ascii_alphanumeric() {
+            self.advance();
+        }
         self.make_identifier_token()
     }
 
     fn make_identifier_token(&self) -> Token {
-        let lexeme: String = self.source[self.start..self.current]
-            .into_iter()
-            .collect();
+        let lexeme: String = self.source[self.start..self.current].into_iter().collect();
 
         let kind = match lexeme.as_str() {
             "and" => TokenKind::And,
@@ -207,11 +225,11 @@ impl Scanner {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Token {
     pub kind: TokenKind,
-    lexeme: String,
-    line: u16,
+    pub lexeme: String,
+    pub line: u16,
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -271,42 +289,63 @@ mod tests {
     #[test]
     fn identifiers_are_parsed() {
         let mut scanner = Scanner::new("railroad");
-        assert_eq!(scanner.next(), Token::new(TokenKind::Identifier, String::from("railroad"), 1));
+        assert_eq!(
+            scanner.next(),
+            Token::new(TokenKind::Identifier, String::from("railroad"), 1)
+        );
     }
 
     #[test]
     fn keywords_are_parsed() {
         let mut scanner = Scanner::new("this");
-        assert_eq!(scanner.next(), Token::new(TokenKind::This, String::from("this"), 1));
+        assert_eq!(
+            scanner.next(),
+            Token::new(TokenKind::This, String::from("this"), 1)
+        );
     }
 
     #[test]
     fn punctuation_is_parsed() {
         let mut scanner = Scanner::new("{");
-        assert_eq!(scanner.next(), Token::new(TokenKind::LeftBrace, String::from("{"), 1));
+        assert_eq!(
+            scanner.next(),
+            Token::new(TokenKind::LeftBrace, String::from("{"), 1)
+        );
     }
 
     #[test]
     fn multicharacter_tokens_are_parsed() {
         let mut scanner = Scanner::new("!=");
-        assert_eq!(scanner.next(), Token::new(TokenKind::BangEqual, String::from("!="), 1));        
+        assert_eq!(
+            scanner.next(),
+            Token::new(TokenKind::BangEqual, String::from("!="), 1)
+        );
     }
 
     #[test]
     fn whitespace_is_skipped() {
         let mut scanner = Scanner::new(" love");
-        assert_eq!(scanner.next(), Token::new(TokenKind::Identifier, String::from("love"), 1));
+        assert_eq!(
+            scanner.next(),
+            Token::new(TokenKind::Identifier, String::from("love"), 1)
+        );
     }
 
     #[test]
     fn comment_is_skipped() {
         let mut scanner = Scanner::new("// test a comment\ndifficult");
-        assert_eq!(scanner.next(), Token::new(TokenKind::Identifier, String::from("difficult"), 2));
+        assert_eq!(
+            scanner.next(),
+            Token::new(TokenKind::Identifier, String::from("difficult"), 2)
+        );
     }
 
     #[test]
     fn newlines_increment_line_number() {
         let mut scanner = Scanner::new("\n.");
-        assert_eq!(scanner.next(), Token::new(TokenKind::Dot, String::from("."), 2));
+        assert_eq!(
+            scanner.next(),
+            Token::new(TokenKind::Dot, String::from("."), 2)
+        );
     }
 }

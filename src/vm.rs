@@ -1,13 +1,14 @@
 use crate::bytecode::Value;
-use crate::scanner::Scanner;
+use crate::compiler::Compiler;
+use crate::op_code;
 use crate::Chunk;
-use crate::OpCode;
 
 #[derive(Debug)]
 pub struct VM {
     chunk: Option<Chunk>,
     ip: usize,
     stack: Vec<Value>,
+    pub output: Option<Value>,
 }
 
 #[derive(Debug)]
@@ -23,16 +24,8 @@ impl VM {
             chunk: None,
             ip: 0,
             stack: Vec::<Value>::new(),
+            output: None,
         }
-    }
-
-    fn compile(source: &str) -> Option<Chunk> {
-        let mut scanner = Scanner::new(source);
-        let line = -1;
-        loop {
-            let token = scanner.next();
-        }
-        None
     }
 
     pub fn interpret(&mut self, chunk: Chunk) -> InterpretResult {
@@ -42,8 +35,9 @@ impl VM {
     }
 
     pub fn interpret_source(&mut self, source: &str) -> InterpretResult {
-        let chunk = VM::compile(source);
-        self.interpret(chunk.unwrap())
+        // let chunk = compile(source);
+        // self.interpret(chunk.unwrap())
+        InterpretResult::Ok
     }
 
     fn run(&mut self) -> InterpretResult {
@@ -58,31 +52,80 @@ impl VM {
 					let b = self.stack.pop().unwrap();
 					let c = a $op b;
 					self.stack.push(c);
-				}
+				};
 			}
 		}
 
         loop {
-            let op = &chunk.code[self.ip];
+            let op = chunk.code[self.ip];
             self.ip += 1;
 
             match op {
-                OpCode::Add => binop!(+),
-                OpCode::Subtract => binop!(-),
-                OpCode::Multiply => binop!(*),
-                OpCode::Divide => binop!(/),
-                OpCode::Negate => {
+                op_code::ADD => binop!(+),
+                op_code::SUBTRACT => binop!(-),
+                op_code::MULTIPLY => binop!(*),
+                op_code::DIVIDE => binop!(/),
+                op_code::NEGATE => {
                     let negation = -self.stack.pop().unwrap();
                     self.stack.push(negation);
                 }
-                OpCode::Constant(value) => {
-                    self.stack.push(chunk.constants[*value]);
+                op_code::CONSTANT => {
+                    let constant_index = chunk.code[self.ip] as usize;
+                    self.ip += 1;
+                    self.stack.push(chunk.constants[constant_index]);
                 }
-                OpCode::Return => {
-                    println!("{:?}", self.stack.pop().unwrap());
+                op_code::RETURN => {
+                    self.output = self.stack.pop();
+                    println!("{:?}", self.output.unwrap());
                     return InterpretResult::Ok;
                 }
+                _ => panic!("Unsupported opcode!"),
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::op_code;
+    use crate::Chunk;
+    use super::*;
+
+    #[test]
+    fn division() {
+        let chunk = Chunk::new(
+            vec![
+                op_code::CONSTANT,
+                1,
+                op_code::CONSTANT,
+                0,
+                op_code::DIVIDE,
+                op_code::RETURN,
+            ],
+            vec![100.0, 5.0],
+            vec![123, 123, 123, 123, 123, 123, 123],
+        );
+        let mut vm = VM::new();
+        vm.interpret(chunk);
+
+        assert_eq!(vm.output, Some(20.0));
+    }
+
+    #[test]
+    fn negation() {
+        let chunk = Chunk::new(
+            vec![
+                op_code::CONSTANT,
+                0,
+                op_code::NEGATE,
+                op_code::RETURN,
+            ],
+            vec![100.0],
+            vec![123, 123, 123, 123],
+        );
+        let mut vm = VM::new();
+        vm.interpret(chunk);
+
+        assert_eq!(vm.output, Some(-100.0));
     }
 }

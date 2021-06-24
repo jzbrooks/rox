@@ -1,9 +1,10 @@
 mod bytecode;
+mod compiler;
 mod scanner;
 mod vm;
 
+use bytecode::op_code;
 use bytecode::Chunk;
-use bytecode::OpCode;
 use scanner::Scanner;
 use scanner::TokenKind;
 use std::env;
@@ -14,40 +15,42 @@ use vm::InterpretResult;
 use vm::VM;
 
 fn main() {
-    let mut scanner = Scanner::new("{}  ; .!=\n;{}\"test\"1000.03\ngorgonzola\nand\nbrie");
-    let argv: Vec<String> = env::args().collect();
-    let argc = argv.len();
+    // let mut scanner = Scanner::new("{}  ; .!=\n;{}\"test\"1000.03\ngorgonzola\nand\nbrie");
+    // let argv: Vec<String> = env::args().collect();
+    // let argc = argv.len();
 
-    let mut current = scanner.next();
-    println!("{:?}", scanner.next());
-    while current.kind != TokenKind::End {
-        current = scanner.next();
-        println!("{:?}", current);
-    }
+    // let mut current = scanner.next();
+    // println!("{:?}", scanner.next());
+    // while current.kind != TokenKind::End {
+    //     current = scanner.next();
+    //     println!("{:?}", current);
+    // }
 
-    let mut vm = VM::new();
-
-    if argc == 1 {
-        repl(vm);
-    } else if argc == 2 {
-        run_file(vm, &argv[1]);
-    } else {
-        eprintln!("Usage: rox [path]");
-        process::exit(74);
-    }
-    // let chunk = Chunk::new(
-    //     vec!(
-    //         OpCode::Constant(1),
-    //         OpCode::Constant(0),
-    //         OpCode::Divide,
-    //         OpCode::Negate,
-    //         OpCode::Return,
-    //     ),
-    //     vec!(100.0, 5.0),
-    //     vec!(123, 123, 123, 123, 123)
-    // );
     // let mut vm = VM::new();
-    // vm.interpret(chunk);
+
+    // if argc == 1 {
+    //     repl(vm);
+    // } else if argc == 2 {
+    //     run_file(vm, &argv[1]);
+    // } else {
+    //     eprintln!("Usage: rox [path]");
+    //     process::exit(74);
+    // }
+    let chunk = Chunk::new(
+        vec![
+            op_code::CONSTANT,
+            1,
+            op_code::CONSTANT,
+            0,
+            op_code::DIVIDE,
+            op_code::NEGATE,
+            op_code::RETURN,
+        ],
+        vec![100.0, 5.0],
+        vec![123, 123, 123, 123, 123, 123, 123],
+    );
+    let mut vm = VM::new();
+    vm.interpret(chunk);
 }
 
 fn repl(mut vm: VM) {
