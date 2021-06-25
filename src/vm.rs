@@ -87,9 +87,9 @@ impl VM {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use crate::op_code;
     use crate::Chunk;
-    use super::*;
 
     #[test]
     fn division() {
@@ -114,12 +114,7 @@ mod tests {
     #[test]
     fn negation() {
         let chunk = Chunk::new(
-            vec![
-                op_code::CONSTANT,
-                0,
-                op_code::NEGATE,
-                op_code::RETURN,
-            ],
+            vec![op_code::CONSTANT, 0, op_code::NEGATE, op_code::RETURN],
             vec![100.0],
             vec![123, 123, 123, 123],
         );

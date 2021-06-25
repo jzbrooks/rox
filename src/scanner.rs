@@ -3,7 +3,7 @@ pub struct Scanner {
     source: Vec<char>,
     pub start: usize,
     current: usize,
-    line: u16,
+    line: u32,
 }
 
 impl Scanner {
@@ -229,7 +229,7 @@ impl Scanner {
 pub struct Token {
     pub kind: TokenKind,
     pub lexeme: String,
-    pub line: u16,
+    pub line: u32,
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -277,7 +277,7 @@ pub enum TokenKind {
 }
 
 impl Token {
-    pub fn new(kind: TokenKind, lexeme: String, line: u16) -> Token {
+    pub fn new(kind: TokenKind, lexeme: String, line: u32) -> Token {
         Token { kind, lexeme, line }
     }
 }

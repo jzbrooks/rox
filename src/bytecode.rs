@@ -33,8 +33,10 @@ impl Chunk {
 
     pub fn disassemble(&self, description: &str) {
         println!("=== {} ===", description);
-        for (offset, byte) in self.code.iter().enumerate() {
-            self.disassemble_instruction(*byte, offset);
+        let mut offset: usize = 0;
+        while offset < self.code.len() {
+            let byte = self.code[offset];
+            offset = self.disassemble_instruction(byte, offset);
         }
     }
 

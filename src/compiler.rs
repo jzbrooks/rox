@@ -1,4 +1,4 @@
-use crate::bytecode::Chunk;
+use crate::bytecode::{op_code, Chunk};
 use crate::scanner::{Scanner, Token, TokenKind};
 
 #[derive(Debug)]
@@ -27,7 +27,7 @@ impl Compiler {
 
     fn compile(&mut self) -> Chunk {
         self.chunk = Some(Chunk::new(Vec::new(), Vec::new(), Vec::new()));
-        // self.expression();
+        self.expression();
         self.consume(TokenKind::End, "Expected the end of an expression.");
         if !self.had_error {
             self.chunk.as_ref().unwrap().clone()
@@ -92,4 +92,24 @@ impl Compiler {
         eprintln!(": {}", message);
         self.had_error = true;
     }
+
+    fn emit(&mut self, byte: u8) {
+        let line = self.previous.as_ref().unwrap().line;
+        self.chunk.as_mut().unwrap().write(byte, line);
+    }
+
+    fn end_compiler(&mut self) {
+        self.emit_return();
+    }
+
+    fn emit_return(&mut self) {
+        self.emit(op_code::RETURN);
+    }
+
+    fn emit_two(&mut self, first: u8, second: u8) {
+        self.emit(first);
+        self.emit(second);
+    }
+
+    fn expression(&self) {}
 }
