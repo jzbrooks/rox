@@ -1,4 +1,4 @@
-use crate::bytecode::{op_code, Chunk};
+use crate::bytecode::{Chunk, Value, op_code};
 use crate::scanner::{Scanner, Token, TokenKind};
 
 #[derive(Debug)]
@@ -93,6 +93,11 @@ impl Compiler {
         self.had_error = true;
     }
 
+    fn error(&mut self, message: &str) {
+        let previous = self.previous.as_ref().unwrap().clone();
+        self.error_at(&previous, message);
+    }
+
     fn emit(&mut self, byte: u8) {
         let line = self.previous.as_ref().unwrap().line;
         self.chunk.as_mut().unwrap().write(byte, line);
@@ -111,5 +116,25 @@ impl Compiler {
         self.emit(second);
     }
 
+    fn emit_constant(&mut self, value: Value) {
+        let index = self.make_constant(value);
+        self.emit_two(op_code::CONSTANT, index);
+    }
+
+    fn make_constant(&mut self, value: Value) -> u8 {
+        let constant_index = self.chunk.as_mut().unwrap().write_constant(value);
+        if constant_index > 255 {
+            self.error("Too many constants in one chunk.");
+            return 0;
+        }
+
+         constant_index as u8
+    }
+
     fn expression(&self) {}
+
+    fn number(&mut self) {
+        let value: Value = self.previous.as_ref().unwrap().lexeme.parse().unwrap();
+        self.emit_constant(value);
+    }
 }

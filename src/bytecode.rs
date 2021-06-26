@@ -31,6 +31,11 @@ impl Chunk {
         self.lines.push(line);
     }
 
+    pub fn write_constant(&mut self, value: Value) -> usize {
+        self.constants.push(value);
+        self.constants.len() - 1
+    }
+
     pub fn disassemble(&self, description: &str) {
         println!("=== {} ===", description);
         let mut offset: usize = 0;
