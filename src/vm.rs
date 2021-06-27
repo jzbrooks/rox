@@ -42,10 +42,9 @@ impl VM {
         macro_rules! binop {
 			($op:tt) => {
 				{
-					let a = self.stack.pop().unwrap();
 					let b = self.stack.pop().unwrap();
-					let c = a $op b;
-					self.stack.push(c);
+					let a = self.stack.pop().unwrap();
+					self.stack.push(a $op b);
 				};
 			}
 		}
@@ -90,9 +89,9 @@ mod tests {
         let chunk = Chunk::new(
             vec![
                 op_code::CONSTANT,
-                1,
-                op_code::CONSTANT,
                 0,
+                op_code::CONSTANT,
+                1,
                 op_code::DIVIDE,
                 op_code::RETURN,
             ],
