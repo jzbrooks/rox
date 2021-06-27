@@ -360,7 +360,8 @@ impl<'a> Compiler<'a> {
     }
 
     fn number(&mut self) {
-        let value: Value = self.previous.as_ref().unwrap().lexeme.parse().unwrap();
+        let number = self.previous.as_ref().unwrap().lexeme.parse().unwrap();
+        let value = Value::Float(number);
         self.emit_constant(value);
     }
 
@@ -424,7 +425,7 @@ mod tests {
         let mut compiler = Compiler::new("-1");
         let chunk = compiler.compile();
 
-        assert_eq!(chunk.constants[0], 1.0);
+        assert_eq!(chunk.constants[0], Value::Float(1.0));
         assert_eq!(chunk.code[0], op_code::CONSTANT);
         assert_eq!(chunk.code[1], 0);
         assert_eq!(chunk.code[2], op_code::NEGATE);
@@ -436,8 +437,8 @@ mod tests {
         let mut compiler = Compiler::new("1 + 2");
         let chunk = compiler.compile();
 
-        assert_eq!(chunk.constants[0], 1.0);
-        assert_eq!(chunk.constants[1], 2.0);
+        assert_eq!(chunk.constants[0], Value::Float(1.0));
+        assert_eq!(chunk.constants[1], Value::Float(2.0));
         assert_eq!(chunk.code[0], op_code::CONSTANT);
         assert_eq!(chunk.code[1], 0);
         assert_eq!(chunk.code[2], op_code::CONSTANT);

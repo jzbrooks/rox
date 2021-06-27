@@ -21,7 +21,7 @@ impl VM {
     pub fn new() -> VM {
         VM {
             ip: 0,
-            stack: Vec::<Value>::new(),
+            stack: Vec::new(),
             output: None,
         }
     }
@@ -44,7 +44,12 @@ impl VM {
 				{
 					let b = self.stack.pop().unwrap();
 					let a = self.stack.pop().unwrap();
-					self.stack.push(a $op b);
+
+					if let (Value::Float(u), Value::Float(t)) = (b, a) {
+                        self.stack.push(Value::Float(t $op u));
+                    } else {
+                        panic!("This shouldn't happen.");
+                    }
 				};
 			}
 		}
@@ -59,17 +64,21 @@ impl VM {
                 op_code::MULTIPLY => binop!(*),
                 op_code::DIVIDE => binop!(/),
                 op_code::NEGATE => {
-                    let negation = -self.stack.pop().unwrap();
-                    self.stack.push(negation);
+                    let previous = self.stack.pop().unwrap();
+                    if let Value::Float(n) = previous {
+                        self.stack.push(Value::Float(-n));
+                    } else {
+                        panic!("Cannot negate {}", previous);
+                    }
                 }
                 op_code::CONSTANT => {
                     let constant_index = chunk.code[self.ip] as usize;
                     self.ip += 1;
-                    self.stack.push(chunk.constants[constant_index]);
+                    self.stack.push(chunk.constants[constant_index].clone());
                 }
                 op_code::RETURN => {
                     self.output = self.stack.pop();
-                    println!("{:?}", self.output.unwrap());
+                    println!("{}", self.output.as_ref().unwrap().clone());
                     return InterpretResult::Ok;
                 }
                 _ => panic!("Unsupported opcode!"),
@@ -95,25 +104,25 @@ mod tests {
                 op_code::DIVIDE,
                 op_code::RETURN,
             ],
-            vec![100.0, 5.0],
+            vec![Value::Float(100.0), Value::Float(5.0)],
             vec![123, 123, 123, 123, 123, 123, 123],
         );
         let mut vm = VM::new();
         vm.run(&chunk);
 
-        assert_eq!(vm.output, Some(20.0));
+        assert_eq!(vm.output, Some(Value::Float(20.0)));
     }
 
     #[test]
     fn negation() {
         let chunk = Chunk::new(
             vec![op_code::CONSTANT, 0, op_code::NEGATE, op_code::RETURN],
-            vec![100.0],
+            vec![Value::Float(100.0)],
             vec![123, 123, 123, 123],
         );
         let mut vm = VM::new();
         vm.run(&chunk);
 
-        assert_eq!(vm.output, Some(-100.0));
+        assert_eq!(vm.output, Some(Value::Float(-100.0)));
     }
 }

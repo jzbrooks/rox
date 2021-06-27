@@ -1,4 +1,17 @@
-pub type Value = f64;
+#[derive(Clone, PartialEq, Debug)]
+pub enum Value {
+    Float(f64),
+    Bool(bool),
+}
+
+impl std::fmt::Display for Value {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match *self {
+            Value::Float(n) => write!(f, "{}", n),
+            Value::Bool(b) => write!(f, "{}", b),
+        }
+    }
+}
 
 pub mod op_code {
     pub const ADD: u8 = 0;
