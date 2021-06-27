@@ -2,10 +2,10 @@ use crate::bytecode::{op_code, Chunk, Value};
 use crate::scanner::{Scanner, Token, TokenKind};
 use precedence::Precedence;
 
-pub struct Compiler {
-    scanner: Scanner,
-    current: Token,
-    previous: Option<Token>,
+pub struct Compiler<'a> {
+    scanner: Scanner<'a>,
+    current: Token<'a>,
+    previous: Option<Token<'a>>,
     chunk: Option<Chunk>,
     had_error: bool,
     panic_mode: bool,
@@ -27,18 +27,18 @@ mod precedence {
     pub const PRIMARY: Precedence = 10;
 }
 
-pub struct ParseRule {
-    prefix: Option<fn(compiler: &mut Compiler)>,
-    infix: Option<fn(compiler: &mut Compiler)>,
+pub struct ParseRule<'a> {
+    prefix: Option<fn(compiler: &mut Compiler<'a>)>,
+    infix: Option<fn(compiler: &mut Compiler<'a>)>,
     precedence: Precedence,
 }
 
-pub trait ParseRuled {
-    fn get_parse_rule(&self) -> ParseRule;
+pub trait ParseRuled<'a> {
+    fn get_parse_rule(&self) -> ParseRule<'a>;
 }
 
-impl ParseRuled for TokenKind {
-    fn get_parse_rule(&self) -> ParseRule {
+impl<'a> ParseRuled<'a> for TokenKind {
+    fn get_parse_rule(&self) -> ParseRule<'a> {
         match *self {
             TokenKind::LeftParen => ParseRule {
                 prefix: Some(Compiler::binary),
@@ -244,7 +244,7 @@ impl ParseRuled for TokenKind {
     }
 }
 
-impl Compiler {
+impl<'a> Compiler<'a> {
     pub fn new(source: &str) -> Compiler {
         let mut scanner = Scanner::new(source);
         let current = scanner.next();
