@@ -244,6 +244,25 @@ impl<'a> ParseRuled<'a> for TokenKind {
     }
 }
 
+macro_rules! error_at {
+    ($c:expr,$t:expr,$m:expr) => {
+        if $c.panic_mode {
+            return;
+        }
+
+        $c.panic_mode = true;
+        eprint!("[line {}] Error", $t.line);
+
+        match $t.kind {
+            TokenKind::End => eprint!(" at the end."),
+            _ => eprint!(" at {} ", &($t.lexeme)),
+        }
+
+        eprintln!(": {}", $m);
+        $c.had_error = true;
+    };
+}
+
 impl<'a> Compiler<'a> {
     pub fn new(source: &str) -> Compiler {
         let mut scanner = Scanner::new(source);
@@ -294,30 +313,13 @@ impl<'a> Compiler<'a> {
     }
 
     fn error(&mut self, message: &str) {
-        let previous = self.previous.as_ref().unwrap().clone();
-        self.error_at(&previous, message);
+        let previous = self.previous.as_ref().unwrap();
+        error_at!(self, previous, message);
     }
 
     fn error_at_current(&mut self, message: &str) {
-        let current = self.current.clone();
-        self.error_at(&current, message);
-    }
-
-    fn error_at(&mut self, token: &Token, message: &str) {
-        if self.panic_mode {
-            return;
-        }
-
-        self.panic_mode = true;
-        eprint!("[line {}] Error", token.line);
-
-        match token.kind {
-            TokenKind::End => eprint!(" at the end."),
-            _ => eprint!(" at {} ", &(token.lexeme)),
-        }
-
-        eprintln!(": {}", message);
-        self.had_error = true;
+        let current = &self.current;
+        error_at!(self, current, message);
     }
 
     fn emit(&mut self, byte: u8) {

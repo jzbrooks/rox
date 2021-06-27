@@ -73,7 +73,8 @@ impl Chunk {
 
     fn constant_instruction(&self, name: &str, offset: usize) -> usize {
         println!(
-            "OP_CONSTANT {index:>0width$} '{0}'",
+            "{0} {index:>0width$} '{1}'",
+            name,
             self.constants[self.code[offset + 1] as usize],
             index = offset + 1,
             width = 4,
