@@ -5,7 +5,6 @@ use crate::Chunk;
 
 #[derive(Debug)]
 pub struct VM {
-    chunk: Option<Chunk>,
     ip: usize,
     stack: Vec<Value>,
     pub output: Option<Value>,
@@ -21,27 +20,22 @@ pub enum InterpretResult {
 impl VM {
     pub fn new() -> VM {
         VM {
-            chunk: None,
             ip: 0,
             stack: Vec::<Value>::new(),
             output: None,
         }
     }
 
-    pub fn interpret(&mut self, chunk: Chunk) -> InterpretResult {
-        self.chunk = Some(chunk);
-        self.ip = 0;
-        self.run()
-    }
-
     pub fn interpret_source(&mut self, source: &str) -> InterpretResult {
-        // let chunk = compile(source);
-        // self.interpret(chunk.unwrap())
-        InterpretResult::Ok
+        let mut compiler = Compiler::new(source);
+        let chunk = compiler.compile();
+        self.run(&chunk)
     }
 
-    fn run(&mut self) -> InterpretResult {
-        let chunk = &self.chunk.as_ref().unwrap();
+    fn run(&mut self, chunk: &Chunk) -> InterpretResult {
+        // Reset the instruction pointer for each run
+        self.ip = 0;
+
         println!("{:?}", self.stack);
         chunk.disassemble("test");
 
@@ -106,7 +100,7 @@ mod tests {
             vec![123, 123, 123, 123, 123, 123, 123],
         );
         let mut vm = VM::new();
-        vm.interpret(chunk);
+        vm.run(&chunk);
 
         assert_eq!(vm.output, Some(20.0));
     }
@@ -119,7 +113,7 @@ mod tests {
             vec![123, 123, 123, 123],
         );
         let mut vm = VM::new();
-        vm.interpret(chunk);
+        vm.run(&chunk);
 
         assert_eq!(vm.output, Some(-100.0));
     }

@@ -1,3 +1,5 @@
+use crate::compiler::ParseRuled;
+
 #[derive(Debug)]
 pub struct Scanner {
     source: Vec<char>,
