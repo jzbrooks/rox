@@ -3,12 +3,8 @@ mod compiler;
 mod scanner;
 mod vm;
 
-use std::env;
-use std::fs;
-use std::io;
-use std::process;
-use vm::InterpretResult;
-use vm::VM;
+use std::{env, fs, io, process};
+use vm::{InterpretError, VM};
 
 fn main() {
     let argv: Vec<String> = env::args().collect();
@@ -31,7 +27,11 @@ fn repl(mut vm: VM) {
 
         let mut line = String::new();
         if let io::Result::Ok(_) = io::stdin().read_line(&mut line) {
-            vm.interpret_source(&line);
+            let result = vm.interpret_source(&line);
+
+            if let Ok(value) = result {
+                println!(">>> {}", value);
+            }
         } else {
             break;
         }
@@ -43,8 +43,10 @@ fn run_file(mut vm: VM, path: &str) {
     let result = vm.interpret_source(&source);
 
     match result {
-        InterpretResult::CompileError => process::exit(65),
-        InterpretResult::RuntimeError => process::exit(70),
-        InterpretResult::Ok => {}
+        Err(InterpretError::Compile) => process::exit(65),
+        Err(InterpretError::Runtime) => process::exit(70),
+        Ok(value) => {
+            println!(">>> {}", value);
+        }
     }
 }
