@@ -2,6 +2,49 @@
 pub enum Value {
     Float(f64),
     Bool(bool),
+    Nil,
+}
+
+impl Value {
+    pub fn is_float(&self) -> bool {
+        if let Value::Float(_) = *self {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn is_bool(&self) -> bool {
+        if let Value::Bool(_) = *self {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn as_float(&self) -> f64 {
+        if let Value::Float(f) = *self {
+            f
+        } else {
+            panic!("Value ({}) is not a float", *self);
+        }
+    }
+
+    pub fn as_bool(&self) -> bool {
+        if let Value::Bool(b) = *self {
+            b
+        } else {
+            panic!("Value ({}) is not a bool", *self);
+        }
+    }
+
+    pub fn is_nil(&self) -> bool {
+        if let Value::Nil = *self {
+            true
+        } else {
+            false
+        }
+    }
 }
 
 impl std::fmt::Display for Value {
@@ -9,6 +52,7 @@ impl std::fmt::Display for Value {
         match *self {
             Value::Float(n) => write!(f, "{}", n),
             Value::Bool(b) => write!(f, "{}", b),
+            Value::Nil => write!(f, "nil"),
         }
     }
 }
@@ -20,7 +64,10 @@ pub mod op_code {
     pub const DIVIDE: u8 = 3;
     pub const CONSTANT: u8 = 4;
     pub const NEGATE: u8 = 5;
-    pub const RETURN: u8 = 6;
+    pub const NIL: u8 = 6;
+    pub const TRUE: u8 = 7;
+    pub const FALSE: u8 = 8;
+    pub const RETURN: u8 = 255;
 }
 
 #[derive(Debug, Clone)]
@@ -72,9 +119,12 @@ impl Chunk {
             op_code::SUBTRACT => self.simple_instruction("OP_SUBTRACT", offset),
             op_code::MULTIPLY => self.simple_instruction("OP_MULTIPLY", offset),
             op_code::DIVIDE => self.simple_instruction("OP_DIVIDE", offset),
-            op_code::NEGATE => self.simple_instruction("OP_NEGATE", offset),
-            op_code::RETURN => self.simple_instruction("OP_RETURN", offset),
             op_code::CONSTANT => self.constant_instruction("OP_CONSTANT", offset),
+            op_code::NEGATE => self.simple_instruction("OP_NEGATE", offset),
+            op_code::NIL => self.simple_instruction("OP_NIL", offset),
+            op_code::TRUE => self.simple_instruction("OP_TRUE", offset),
+            op_code::FALSE => self.simple_instruction("OP_FALSE", offset),
+            op_code::RETURN => self.simple_instruction("OP_RETURN", offset),
             _ => panic!("Unsupported opcode!"),
         }
     }

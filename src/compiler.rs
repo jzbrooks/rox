@@ -166,7 +166,7 @@ impl<'a> ParseRuled<'a> for TokenKind {
                 precedence: precedence::NONE,
             },
             TokenKind::False => ParseRule {
-                prefix: None,
+                prefix: Some(Compiler::literal),
                 infix: None,
                 precedence: precedence::NONE,
             },
@@ -186,7 +186,7 @@ impl<'a> ParseRuled<'a> for TokenKind {
                 precedence: precedence::NONE,
             },
             TokenKind::Nil => ParseRule {
-                prefix: None,
+                prefix: Some(Compiler::literal),
                 infix: None,
                 precedence: precedence::NONE,
             },
@@ -216,7 +216,7 @@ impl<'a> ParseRuled<'a> for TokenKind {
                 precedence: precedence::NONE,
             },
             TokenKind::True => ParseRule {
-                prefix: None,
+                prefix: Some(Compiler::literal),
                 infix: None,
                 precedence: precedence::NONE,
             },
@@ -395,6 +395,18 @@ impl<'a> Compiler<'a> {
         }
     }
 
+    fn literal(&mut self) {
+        match self.previous.as_ref().unwrap().kind {
+            TokenKind::True => self.emit(op_code::TRUE),
+            TokenKind::False => self.emit(op_code::FALSE),
+            TokenKind::Nil => self.emit(op_code::NIL),
+            _ => unreachable!(
+                "Literal not handled {}",
+                self.previous.as_ref().unwrap().lexeme
+            ),
+        }
+    }
+
     fn parse_precedence(&mut self, precedence: Precedence) {
         self.advance();
 
@@ -445,5 +457,32 @@ mod tests {
         assert_eq!(chunk.code[3], 1);
         assert_eq!(chunk.code[4], op_code::ADD);
         assert_eq!(chunk.code[5], op_code::RETURN);
+    }
+
+    #[test]
+    fn literal_true() {
+        let mut compiler = Compiler::new("true");
+        let chunk = compiler.compile();
+
+        assert_eq!(chunk.code[0], op_code::TRUE);
+        assert_eq!(chunk.code[1], op_code::RETURN);
+    }
+
+    #[test]
+    fn literal_false() {
+        let mut compiler = Compiler::new("false");
+        let chunk = compiler.compile();
+
+        assert_eq!(chunk.code[0], op_code::FALSE);
+        assert_eq!(chunk.code[1], op_code::RETURN);
+    }
+
+    #[test]
+    fn literal_nil() {
+        let mut compiler = Compiler::new("nil");
+        let chunk = compiler.compile();
+
+        assert_eq!(chunk.code[0], op_code::NIL);
+        assert_eq!(chunk.code[1], op_code::RETURN);
     }
 }

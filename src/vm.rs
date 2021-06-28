@@ -3,14 +3,13 @@ use crate::compiler::Compiler;
 use crate::op_code;
 use crate::Chunk;
 
-#[derive(Debug)]
 pub struct VM {
     ip: usize,
     stack: Vec<Value>,
     pub output: Option<Value>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum InterpretResult {
     Ok,
     CompileError,
@@ -42,14 +41,13 @@ impl VM {
         macro_rules! binop {
 			($op:tt) => {
 				{
-					let b = self.stack.pop().unwrap();
-					let a = self.stack.pop().unwrap();
-
-					if let (Value::Float(u), Value::Float(t)) = (b, a) {
-                        self.stack.push(Value::Float(t $op u));
-                    } else {
-                        panic!("This shouldn't happen.");
+                    if !self.peek(0).is_float() || !self.peek(1).is_float() {
+                        self.runtime_error(chunk, "Operands must be a number");
+                        return InterpretResult::RuntimeError;
                     }
+					let b = self.stack.pop().unwrap().as_float();
+					let a = self.stack.pop().unwrap().as_float();
+                    self.stack.push(Value::Float(a $op b));
 				};
 			}
 		}
@@ -65,17 +63,23 @@ impl VM {
                 op_code::DIVIDE => binop!(/),
                 op_code::NEGATE => {
                     let previous = self.stack.pop().unwrap();
-                    if let Value::Float(n) = previous {
-                        self.stack.push(Value::Float(-n));
-                    } else {
-                        panic!("Cannot negate {}", previous);
+
+                    if !previous.is_float() {
+                        self.runtime_error(chunk, &*format!("Cannot negate {}", previous));
+                        return InterpretResult::RuntimeError;
                     }
+
+                    let number = previous.as_float();
+                    self.stack.push(Value::Float(-number));
                 }
                 op_code::CONSTANT => {
                     let constant_index = chunk.code[self.ip] as usize;
                     self.ip += 1;
                     self.stack.push(chunk.constants[constant_index].clone());
                 }
+                op_code::NIL => self.stack.push(Value::Nil),
+                op_code::TRUE => self.stack.push(Value::Bool(true)),
+                op_code::FALSE => self.stack.push(Value::Bool(false)),
                 op_code::RETURN => {
                     self.output = self.stack.pop();
                     println!("{}", self.output.as_ref().unwrap().clone());
@@ -84,6 +88,17 @@ impl VM {
                 _ => panic!("Unsupported opcode!"),
             }
         }
+    }
+
+    fn runtime_error(&self, chunk: &Chunk, message: &str) {
+        let ip = self.ip;
+        let line = chunk.lines[ip];
+        eprintln!("[line {0}] {1}", line, message);
+    }
+
+    fn peek(&self, offset: usize) -> &Value {
+        let size = self.stack.len();
+        &self.stack[size - offset - 1]
     }
 }
 
@@ -124,5 +139,18 @@ mod tests {
         vm.run(&chunk);
 
         assert_eq!(vm.output, Some(Value::Float(-100.0)));
+    }
+
+    #[test]
+    fn invalid_negation() {
+        let chunk = Chunk::new(
+            vec![op_code::CONSTANT, 0, op_code::NEGATE, op_code::RETURN],
+            vec![Value::Bool(true)],
+            vec![123, 123, 123, 123],
+        );
+        let mut vm = VM::new();
+        let result = vm.run(&chunk);
+
+        assert_eq!(result, InterpretResult::RuntimeError);
     }
 }
