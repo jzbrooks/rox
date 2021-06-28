@@ -102,8 +102,8 @@ impl<'a> ParseRuled<'a> for TokenKind {
             },
             TokenKind::BangEqual => ParseRule {
                 prefix: None,
-                infix: None,
-                precedence: precedence::NONE,
+                infix: Some(Compiler::binary),
+                precedence: precedence::EQUALITY,
             },
             TokenKind::Equal => ParseRule {
                 prefix: None,
@@ -112,28 +112,28 @@ impl<'a> ParseRuled<'a> for TokenKind {
             },
             TokenKind::EqualEqual => ParseRule {
                 prefix: None,
-                infix: None,
-                precedence: precedence::NONE,
+                infix: Some(Compiler::binary),
+                precedence: precedence::EQUALITY,
             },
             TokenKind::Greater => ParseRule {
                 prefix: None,
-                infix: None,
-                precedence: precedence::NONE,
+                infix: Some(Compiler::binary),
+                precedence: precedence::COMPARISON,
             },
             TokenKind::GreaterEqual => ParseRule {
                 prefix: None,
-                infix: None,
-                precedence: precedence::NONE,
+                infix: Some(Compiler::binary),
+                precedence: precedence::COMPARISON,
             },
             TokenKind::Less => ParseRule {
                 prefix: None,
-                infix: None,
-                precedence: precedence::NONE,
+                infix: Some(Compiler::binary),
+                precedence: precedence::COMPARISON,
             },
             TokenKind::LessEqual => ParseRule {
                 prefix: None,
-                infix: None,
-                precedence: precedence::NONE,
+                infix: Some(Compiler::binary),
+                precedence: precedence::COMPARISON,
             },
             TokenKind::Identifier => ParseRule {
                 prefix: None,
@@ -397,6 +397,21 @@ impl<'a> Compiler<'a> {
             TokenKind::Minus => self.emit_op(OpCode::Subtract),
             TokenKind::Star => self.emit_op(OpCode::Multiply),
             TokenKind::Slash => self.emit_op(OpCode::Divide),
+            TokenKind::EqualEqual => self.emit_op(OpCode::Equal),
+            TokenKind::BangEqual => {
+                self.emit_op(OpCode::Equal);
+                self.emit_op(OpCode::Not);
+            }
+            TokenKind::Less => self.emit_op(OpCode::Less),
+            TokenKind::LessEqual => {
+                self.emit_op(OpCode::Greater);
+                self.emit_op(OpCode::Not);
+            }
+            TokenKind::Greater => self.emit_op(OpCode::Greater),
+            TokenKind::GreaterEqual => {
+                self.emit_op(OpCode::Less);
+                self.emit_op(OpCode::Not);
+            }
             _ => self.error(&*format!("Unexpected binary operator: {:?}", operator_kind)),
         }
     }

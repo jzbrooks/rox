@@ -44,7 +44,7 @@ impl VM {
         println!("{:?}", self.stack);
         chunk.disassemble("test");
 
-        macro_rules! binop {
+        macro_rules! binop_float {
 			($op:tt) => {
 				{
                     if !self.peek(0).is_float() || !self.peek(1).is_float() {
@@ -58,15 +58,29 @@ impl VM {
 			}
 		}
 
+        macro_rules! binop_bool {
+            ($op:tt) => {
+                {
+                    if !self.peek(0).is_float() || !self.peek(1).is_float() {
+                        self.runtime_error(chunk, "Operands must be a number");
+                        return Err(InterpretError::Runtime);
+                    }
+                    let b = self.stack.pop().unwrap().as_float();
+                    let a = self.stack.pop().unwrap().as_float();
+                    self.stack.push(Value::Bool(a $op b));
+                };
+            }
+        }
+
         loop {
             let op: OpCode = unsafe { std::mem::transmute(chunk.code[self.ip]) };
             self.ip += 1;
 
             match op {
-                OpCode::Add => binop!(+),
-                OpCode::Subtract => binop!(-),
-                OpCode::Multiply => binop!(*),
-                OpCode::Divide => binop!(/),
+                OpCode::Add => binop_float!(+),
+                OpCode::Subtract => binop_float!(-),
+                OpCode::Multiply => binop_float!(*),
+                OpCode::Divide => binop_float!(/),
                 OpCode::Negate => {
                     let previous = self.stack.pop().unwrap();
 
@@ -90,6 +104,13 @@ impl VM {
                 OpCode::Nil => self.stack.push(Value::Nil),
                 OpCode::True => self.stack.push(Value::Bool(true)),
                 OpCode::False => self.stack.push(Value::Bool(false)),
+                OpCode::Equal => {
+                    let b = self.stack.pop();
+                    let a = self.stack.pop();
+                    self.stack.push(Value::Bool(b == a));
+                }
+                OpCode::Less => binop_bool!(<),
+                OpCode::Greater => binop_bool!(>),
                 OpCode::Return => {
                     let result = self.stack.pop().as_ref().unwrap().clone();
                     return Ok(result);
@@ -186,6 +207,72 @@ mod tests {
         let result = vm.run(&chunk)?;
 
         assert_eq!(result, Value::Bool(false));
+
+        Ok(())
+    }
+
+    #[test]
+    fn less() -> Result<(), InterpretError> {
+        let chunk = Chunk::new(
+            vec![
+                OpCode::Constant as u8,
+                0,
+                OpCode::Constant as u8,
+                1,
+                OpCode::Less as u8,
+                OpCode::Return as u8,
+            ],
+            vec![Value::Float(-1.0), Value::Float(1.0)],
+            vec![123, 123, 123, 123, 123, 123],
+        );
+        let mut vm = VM::new();
+        let result = vm.run(&chunk)?;
+
+        assert_eq!(result, Value::Bool(true));
+
+        Ok(())
+    }
+
+    #[test]
+    fn greater() -> Result<(), InterpretError> {
+        let chunk = Chunk::new(
+            vec![
+                OpCode::Constant as u8,
+                0,
+                OpCode::Constant as u8,
+                1,
+                OpCode::Greater as u8,
+                OpCode::Return as u8,
+            ],
+            vec![Value::Float(-1.0), Value::Float(1.0)],
+            vec![123, 123, 123, 123, 123, 123],
+        );
+        let mut vm = VM::new();
+        let result = vm.run(&chunk)?;
+
+        assert_eq!(result, Value::Bool(false));
+
+        Ok(())
+    }
+
+    #[test]
+    fn equals() -> Result<(), InterpretError> {
+        let chunk = Chunk::new(
+            vec![
+                OpCode::Constant as u8,
+                0,
+                OpCode::Constant as u8,
+                1,
+                OpCode::Equal as u8,
+                OpCode::Return as u8,
+            ],
+            vec![Value::Float(1.0), Value::Float(1.0)],
+            vec![123, 123, 123, 123, 123, 123],
+        );
+        let mut vm = VM::new();
+        let result = vm.run(&chunk)?;
+
+        assert_eq!(result, Value::Bool(true));
 
         Ok(())
     }

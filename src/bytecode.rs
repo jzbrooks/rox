@@ -76,6 +76,9 @@ pub enum OpCode {
     True,
     False,
     Not,
+    Equal,
+    Greater,
+    Less,
     Return,
 }
 
@@ -137,6 +140,9 @@ impl Chunk {
             OpCode::True => self.simple_instruction("OP_TRUE", offset),
             OpCode::False => self.simple_instruction("OP_FALSE", offset),
             OpCode::Return => self.simple_instruction("OP_RETURN", offset),
+            OpCode::Equal => self.simple_instruction("OP_EQUAL", offset),
+            OpCode::Greater => self.simple_instruction("OP_GREATER", offset),
+            OpCode::Less => self.simple_instruction("OP_LESS", offset),
         }
     }
 
