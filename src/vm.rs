@@ -1,7 +1,5 @@
-use crate::bytecode::Value;
+use crate::bytecode::{Chunk, OpCode, Value};
 use crate::compiler::Compiler;
-use crate::op_code;
-use crate::Chunk;
 
 pub struct VM {
     ip: usize,
@@ -53,15 +51,15 @@ impl VM {
 		}
 
         loop {
-            let op = chunk.code[self.ip];
+            let op: OpCode = unsafe { std::mem::transmute(chunk.code[self.ip]) };
             self.ip += 1;
 
             match op {
-                op_code::ADD => binop!(+),
-                op_code::SUBTRACT => binop!(-),
-                op_code::MULTIPLY => binop!(*),
-                op_code::DIVIDE => binop!(/),
-                op_code::NEGATE => {
+                OpCode::Add => binop!(+),
+                OpCode::Subtract => binop!(-),
+                OpCode::Multiply => binop!(*),
+                OpCode::Divide => binop!(/),
+                OpCode::Negate => {
                     let previous = self.stack.pop().unwrap();
 
                     if !previous.is_float() {
@@ -72,24 +70,23 @@ impl VM {
                     let number = previous.as_float();
                     self.stack.push(Value::Float(-number));
                 }
-                op_code::CONSTANT => {
+                OpCode::Constant => {
                     let constant_index = chunk.code[self.ip] as usize;
                     self.ip += 1;
                     self.stack.push(chunk.constants[constant_index].clone());
                 }
-                op_code::NOT => {
+                OpCode::Not => {
                     let value = self.stack.pop().unwrap().is_falsey();
                     self.stack.push(Value::Bool(value));
                 }
-                op_code::NIL => self.stack.push(Value::Nil),
-                op_code::TRUE => self.stack.push(Value::Bool(true)),
-                op_code::FALSE => self.stack.push(Value::Bool(false)),
-                op_code::RETURN => {
+                OpCode::Nil => self.stack.push(Value::Nil),
+                OpCode::True => self.stack.push(Value::Bool(true)),
+                OpCode::False => self.stack.push(Value::Bool(false)),
+                OpCode::Return => {
                     self.output = self.stack.pop();
                     println!("{}", self.output.as_ref().unwrap().clone());
                     return InterpretResult::Ok;
                 }
-                _ => panic!("Unsupported opcode!"),
             }
         }
     }
@@ -109,19 +106,18 @@ impl VM {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::op_code;
-    use crate::Chunk;
+    use crate::bytecode::{Chunk, OpCode};
 
     #[test]
     fn division() {
         let chunk = Chunk::new(
             vec![
-                op_code::CONSTANT,
+                OpCode::Constant as u8,
                 0,
-                op_code::CONSTANT,
+                OpCode::Constant as u8,
                 1,
-                op_code::DIVIDE,
-                op_code::RETURN,
+                OpCode::Divide as u8,
+                OpCode::Return as u8,
             ],
             vec![Value::Float(100.0), Value::Float(5.0)],
             vec![123, 123, 123, 123, 123, 123, 123],
@@ -135,7 +131,12 @@ mod tests {
     #[test]
     fn negation() {
         let chunk = Chunk::new(
-            vec![op_code::CONSTANT, 0, op_code::NEGATE, op_code::RETURN],
+            vec![
+                OpCode::Constant as u8,
+                0,
+                OpCode::Negate as u8,
+                OpCode::Return as u8,
+            ],
             vec![Value::Float(100.0)],
             vec![123, 123, 123, 123],
         );
@@ -148,7 +149,12 @@ mod tests {
     #[test]
     fn invalid_negation() {
         let chunk = Chunk::new(
-            vec![op_code::CONSTANT, 0, op_code::NEGATE, op_code::RETURN],
+            vec![
+                OpCode::Constant as u8,
+                0,
+                OpCode::Negate as u8,
+                OpCode::Return as u8,
+            ],
             vec![Value::Bool(true)],
             vec![123, 123, 123, 123],
         );
@@ -161,7 +167,7 @@ mod tests {
     #[test]
     fn not() {
         let chunk = Chunk::new(
-            vec![op_code::TRUE, op_code::NOT, op_code::RETURN],
+            vec![OpCode::True as u8, OpCode::Not as u8, OpCode::Return as u8],
             vec![],
             vec![123, 123, 123],
         );

@@ -1,4 +1,4 @@
-use crate::bytecode::{op_code, Chunk, Value};
+use crate::bytecode::{Chunk, OpCode, Value};
 use crate::scanner::{Scanner, Token, TokenKind};
 use precedence::Precedence;
 
@@ -322,7 +322,12 @@ impl<'a> Compiler<'a> {
         error_at!(self, current, message);
     }
 
-    fn emit(&mut self, byte: u8) {
+    fn emit_op(&mut self, op: OpCode) {
+        let byte = op as u8;
+        self.emit_byte(byte);
+    }
+
+    fn emit_byte(&mut self, byte: u8) {
         let line = self.previous.as_ref().unwrap().line;
         self.chunk.as_mut().unwrap().write(byte, line);
     }
@@ -332,17 +337,17 @@ impl<'a> Compiler<'a> {
     }
 
     fn emit_return(&mut self) {
-        self.emit(op_code::RETURN);
+        self.emit_op(OpCode::Return);
     }
 
-    fn emit_two(&mut self, first: u8, second: u8) {
-        self.emit(first);
-        self.emit(second);
+    fn emit_two(&mut self, op: OpCode, data: u8) {
+        self.emit_op(op);
+        self.emit_byte(data);
     }
 
     fn emit_constant(&mut self, value: Value) {
         let index = self.make_constant(value);
-        self.emit_two(op_code::CONSTANT, index);
+        self.emit_two(OpCode::Constant, index);
     }
 
     fn make_constant(&mut self, value: Value) -> u8 {
@@ -376,8 +381,8 @@ impl<'a> Compiler<'a> {
         self.parse_precedence(precedence::UNARY);
 
         match operator_kind {
-            TokenKind::Bang => self.emit(op_code::NOT),
-            TokenKind::Minus => self.emit(op_code::NEGATE),
+            TokenKind::Bang => self.emit_op(OpCode::Not),
+            TokenKind::Minus => self.emit_op(OpCode::Negate),
             _ => self.error(&*format!("Unexpected unary operator: {:?}", operator_kind)),
         }
     }
@@ -388,19 +393,19 @@ impl<'a> Compiler<'a> {
         self.parse_precedence(rule.precedence + 1);
 
         match operator_kind {
-            TokenKind::Plus => self.emit(op_code::ADD),
-            TokenKind::Minus => self.emit(op_code::SUBTRACT),
-            TokenKind::Star => self.emit(op_code::MULTIPLY),
-            TokenKind::Slash => self.emit(op_code::DIVIDE),
+            TokenKind::Plus => self.emit_op(OpCode::Add),
+            TokenKind::Minus => self.emit_op(OpCode::Subtract),
+            TokenKind::Star => self.emit_op(OpCode::Multiply),
+            TokenKind::Slash => self.emit_op(OpCode::Divide),
             _ => self.error(&*format!("Unexpected binary operator: {:?}", operator_kind)),
         }
     }
 
     fn literal(&mut self) {
         match self.previous.as_ref().unwrap().kind {
-            TokenKind::True => self.emit(op_code::TRUE),
-            TokenKind::False => self.emit(op_code::FALSE),
-            TokenKind::Nil => self.emit(op_code::NIL),
+            TokenKind::True => self.emit_op(OpCode::True),
+            TokenKind::False => self.emit_op(OpCode::False),
+            TokenKind::Nil => self.emit_op(OpCode::Nil),
             _ => unreachable!(
                 "Literal not handled {}",
                 self.previous.as_ref().unwrap().lexeme
@@ -439,10 +444,10 @@ mod tests {
         let chunk = compiler.compile();
 
         assert_eq!(chunk.constants[0], Value::Float(1.0));
-        assert_eq!(chunk.code[0], op_code::CONSTANT);
+        assert_eq!(chunk.code[0], OpCode::Constant as u8);
         assert_eq!(chunk.code[1], 0);
-        assert_eq!(chunk.code[2], op_code::NEGATE);
-        assert_eq!(chunk.code[3], op_code::RETURN);
+        assert_eq!(chunk.code[2], OpCode::Negate as u8);
+        assert_eq!(chunk.code[3], OpCode::Return as u8);
     }
 
     #[test]
@@ -452,12 +457,12 @@ mod tests {
 
         assert_eq!(chunk.constants[0], Value::Float(1.0));
         assert_eq!(chunk.constants[1], Value::Float(2.0));
-        assert_eq!(chunk.code[0], op_code::CONSTANT);
+        assert_eq!(chunk.code[0], OpCode::Constant as u8);
         assert_eq!(chunk.code[1], 0);
-        assert_eq!(chunk.code[2], op_code::CONSTANT);
+        assert_eq!(chunk.code[2], OpCode::Constant as u8);
         assert_eq!(chunk.code[3], 1);
-        assert_eq!(chunk.code[4], op_code::ADD);
-        assert_eq!(chunk.code[5], op_code::RETURN);
+        assert_eq!(chunk.code[4], OpCode::Add as u8);
+        assert_eq!(chunk.code[5], OpCode::Return as u8);
     }
 
     #[test]
@@ -465,8 +470,8 @@ mod tests {
         let mut compiler = Compiler::new("true");
         let chunk = compiler.compile();
 
-        assert_eq!(chunk.code[0], op_code::TRUE);
-        assert_eq!(chunk.code[1], op_code::RETURN);
+        assert_eq!(chunk.code[0], OpCode::True as u8);
+        assert_eq!(chunk.code[1], OpCode::Return as u8);
     }
 
     #[test]
@@ -474,8 +479,8 @@ mod tests {
         let mut compiler = Compiler::new("false");
         let chunk = compiler.compile();
 
-        assert_eq!(chunk.code[0], op_code::FALSE);
-        assert_eq!(chunk.code[1], op_code::RETURN);
+        assert_eq!(chunk.code[0], OpCode::False as u8);
+        assert_eq!(chunk.code[1], OpCode::Return as u8);
     }
 
     #[test]
@@ -483,7 +488,7 @@ mod tests {
         let mut compiler = Compiler::new("nil");
         let chunk = compiler.compile();
 
-        assert_eq!(chunk.code[0], op_code::NIL);
-        assert_eq!(chunk.code[1], op_code::RETURN);
+        assert_eq!(chunk.code[0], OpCode::Nil as u8);
+        assert_eq!(chunk.code[1], OpCode::Return as u8);
     }
 }

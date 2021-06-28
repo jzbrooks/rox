@@ -3,8 +3,6 @@ mod compiler;
 mod scanner;
 mod vm;
 
-use bytecode::op_code;
-use bytecode::Chunk;
 use std::env;
 use std::fs;
 use std::io;

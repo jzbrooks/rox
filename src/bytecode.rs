@@ -64,18 +64,19 @@ impl std::fmt::Display for Value {
     }
 }
 
-pub mod op_code {
-    pub const ADD: u8 = 0;
-    pub const SUBTRACT: u8 = 1;
-    pub const MULTIPLY: u8 = 2;
-    pub const DIVIDE: u8 = 3;
-    pub const CONSTANT: u8 = 4;
-    pub const NEGATE: u8 = 5;
-    pub const NIL: u8 = 6;
-    pub const TRUE: u8 = 7;
-    pub const FALSE: u8 = 8;
-    pub const NOT: u8 = 9;
-    pub const RETURN: u8 = 255;
+#[repr(u8)]
+pub enum OpCode {
+    Add,
+    Subtract,
+    Multiply,
+    Divide,
+    Constant,
+    Negate,
+    Nil,
+    True,
+    False,
+    Not,
+    Return,
 }
 
 #[derive(Debug, Clone)]
@@ -122,19 +123,20 @@ impl Chunk {
             print!("{line:>width$} ", line = self.lines[offset], width = 4);
         }
 
-        match byte {
-            op_code::ADD => self.simple_instruction("OP_ADD", offset),
-            op_code::SUBTRACT => self.simple_instruction("OP_SUBTRACT", offset),
-            op_code::MULTIPLY => self.simple_instruction("OP_MULTIPLY", offset),
-            op_code::DIVIDE => self.simple_instruction("OP_DIVIDE", offset),
-            op_code::CONSTANT => self.constant_instruction("OP_CONSTANT", offset),
-            op_code::NEGATE => self.simple_instruction("OP_NEGATE", offset),
-            op_code::NIL => self.simple_instruction("OP_NIL", offset),
-            op_code::NOT => self.simple_instruction("OP_NOT", offset),
-            op_code::TRUE => self.simple_instruction("OP_TRUE", offset),
-            op_code::FALSE => self.simple_instruction("OP_FALSE", offset),
-            op_code::RETURN => self.simple_instruction("OP_RETURN", offset),
-            _ => panic!("Unsupported opcode!"),
+        let op: OpCode = unsafe { std::mem::transmute(byte) };
+
+        match op {
+            OpCode::Add => self.simple_instruction("OP_ADD", offset),
+            OpCode::Subtract => self.simple_instruction("OP_SUBTRACT", offset),
+            OpCode::Multiply => self.simple_instruction("OP_MULTIPLY", offset),
+            OpCode::Divide => self.simple_instruction("OP_DIVIDE", offset),
+            OpCode::Constant => self.constant_instruction("OP_CONSTANT", offset),
+            OpCode::Negate => self.simple_instruction("OP_NEGATE", offset),
+            OpCode::Nil => self.simple_instruction("OP_NIL", offset),
+            OpCode::Not => self.simple_instruction("OP_NOT", offset),
+            OpCode::True => self.simple_instruction("OP_TRUE", offset),
+            OpCode::False => self.simple_instruction("OP_FALSE", offset),
+            OpCode::Return => self.simple_instruction("OP_RETURN", offset),
         }
     }
 
