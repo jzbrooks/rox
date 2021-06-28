@@ -96,8 +96,8 @@ impl<'a> ParseRuled<'a> for TokenKind {
                 precedence: precedence::FACTOR,
             },
             TokenKind::Bang => ParseRule {
-                prefix: None,
-                infix: Some(Compiler::binary),
+                prefix: Some(Compiler::unary),
+                infix: None,
                 precedence: precedence::NONE,
             },
             TokenKind::BangEqual => ParseRule {
@@ -376,6 +376,7 @@ impl<'a> Compiler<'a> {
         self.parse_precedence(precedence::UNARY);
 
         match operator_kind {
+            TokenKind::Bang => self.emit(op_code::NOT),
             TokenKind::Minus => self.emit(op_code::NEGATE),
             _ => self.error(&*format!("Unexpected unary operator: {:?}", operator_kind)),
         }

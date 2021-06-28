@@ -77,6 +77,10 @@ impl VM {
                     self.ip += 1;
                     self.stack.push(chunk.constants[constant_index].clone());
                 }
+                op_code::NOT => {
+                    let value = self.stack.pop().unwrap().is_falsey();
+                    self.stack.push(Value::Bool(value));
+                }
                 op_code::NIL => self.stack.push(Value::Nil),
                 op_code::TRUE => self.stack.push(Value::Bool(true)),
                 op_code::FALSE => self.stack.push(Value::Bool(false)),
@@ -152,5 +156,18 @@ mod tests {
         let result = vm.run(&chunk);
 
         assert_eq!(result, InterpretResult::RuntimeError);
+    }
+
+    #[test]
+    fn not() {
+        let chunk = Chunk::new(
+            vec![op_code::TRUE, op_code::NOT, op_code::RETURN],
+            vec![],
+            vec![123, 123, 123],
+        );
+        let mut vm = VM::new();
+        vm.run(&chunk);
+
+        assert_eq!(vm.output, Some(Value::Bool(false)));
     }
 }

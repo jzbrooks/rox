@@ -45,6 +45,13 @@ impl Value {
             false
         }
     }
+
+    pub fn is_falsey(&self) -> bool {
+        match *self {
+            Value::Nil | Value::Bool(false) => true,
+            _ => false,
+        }
+    }
 }
 
 impl std::fmt::Display for Value {
@@ -67,6 +74,7 @@ pub mod op_code {
     pub const NIL: u8 = 6;
     pub const TRUE: u8 = 7;
     pub const FALSE: u8 = 8;
+    pub const NOT: u8 = 9;
     pub const RETURN: u8 = 255;
 }
 
@@ -122,6 +130,7 @@ impl Chunk {
             op_code::CONSTANT => self.constant_instruction("OP_CONSTANT", offset),
             op_code::NEGATE => self.simple_instruction("OP_NEGATE", offset),
             op_code::NIL => self.simple_instruction("OP_NIL", offset),
+            op_code::NOT => self.simple_instruction("OP_NOT", offset),
             op_code::TRUE => self.simple_instruction("OP_TRUE", offset),
             op_code::FALSE => self.simple_instruction("OP_FALSE", offset),
             op_code::RETURN => self.simple_instruction("OP_RETURN", offset),
