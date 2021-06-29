@@ -40,7 +40,7 @@ impl<'a> ParseRuled<'a> for TokenKind {
     fn get_parse_rule(&self) -> ParseRule<'a> {
         match *self {
             TokenKind::LeftParen => ParseRule {
-                prefix: Some(Compiler::binary),
+                prefix: Some(Compiler::grouping),
                 infix: None,
                 precedence: Precedence::None,
             },
