@@ -3,6 +3,7 @@ mod compiler;
 mod scanner;
 mod vm;
 
+use std::io::Write;
 use std::{env, fs, io, process};
 use vm::{InterpretError, VM};
 
@@ -24,6 +25,7 @@ fn main() {
 fn repl(mut vm: VM) {
     loop {
         print!("> ");
+        io::stdout().flush().expect("Couldn't flush stdout");
 
         let mut line = String::new();
         if let io::Result::Ok(_) = io::stdin().read_line(&mut line) {

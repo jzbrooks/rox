@@ -26,13 +26,13 @@ enum Precedence {
     Primary,
 }
 
-pub struct ParseRule<'a> {
+struct ParseRule<'a> {
     prefix: Option<fn(compiler: &mut Compiler<'a>)>,
     infix: Option<fn(compiler: &mut Compiler<'a>)>,
     precedence: Precedence,
 }
 
-pub trait ParseRuled<'a> {
+trait ParseRuled<'a> {
     fn get_parse_rule(&self) -> ParseRule<'a>;
 }
 
@@ -510,6 +510,24 @@ mod tests {
         let chunk = compiler.compile();
 
         assert_eq!(chunk.code[4], OpCode::Divide as u8);
+    }
+
+    #[test]
+    fn arithmetic_precedence() {
+        let mut compiler = Compiler::new("1 + 2 * 10");
+        let chunk = compiler.compile();
+        println!("{:?}", chunk.code);
+        assert_eq!(chunk.code[6], OpCode::Multiply as u8);
+        assert_eq!(chunk.code[7], OpCode::Add as u8);
+    }
+
+    #[test]
+    fn coerced_precedence() {
+        let mut compiler = Compiler::new("(1 + 2) * 10");
+        let chunk = compiler.compile();
+        println!("{:?}", chunk.code);
+        assert_eq!(chunk.code[4], OpCode::Add as u8);
+        assert_eq!(chunk.code[7], OpCode::Multiply as u8);
     }
 
     #[test]
