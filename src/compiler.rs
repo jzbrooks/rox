@@ -454,30 +454,112 @@ mod tests {
     use super::*;
 
     #[test]
-    fn unary_expression() {
-        let mut compiler = Compiler::new("-1");
+    fn last_opcode_is_return() {
+        let mut compiler = Compiler::new("10");
         let chunk = compiler.compile();
 
-        assert_eq!(chunk.constants[0], Value::Float(1.0));
-        assert_eq!(chunk.code[0], OpCode::Constant as u8);
-        assert_eq!(chunk.code[1], 0);
-        assert_eq!(chunk.code[2], OpCode::Negate as u8);
-        assert_eq!(chunk.code[3], OpCode::Return as u8);
+        assert_eq!(chunk.code[2], OpCode::Return as u8);
     }
 
     #[test]
-    fn binary_expression() {
+    fn constant() {
+        let mut compiler = Compiler::new("10");
+        let chunk = compiler.compile();
+
+        assert_eq!(chunk.constants[0], Value::Float(10.0));
+        assert_eq!(chunk.code[0], OpCode::Constant as u8);
+        assert_eq!(chunk.code[1], 0);
+    }
+
+    #[test]
+    fn negation() {
+        let mut compiler = Compiler::new("-1");
+        let chunk = compiler.compile();
+
+        assert_eq!(chunk.code[2], OpCode::Negate as u8);
+    }
+
+    #[test]
+    fn sum() {
         let mut compiler = Compiler::new("1 + 2");
         let chunk = compiler.compile();
 
-        assert_eq!(chunk.constants[0], Value::Float(1.0));
-        assert_eq!(chunk.constants[1], Value::Float(2.0));
-        assert_eq!(chunk.code[0], OpCode::Constant as u8);
-        assert_eq!(chunk.code[1], 0);
-        assert_eq!(chunk.code[2], OpCode::Constant as u8);
-        assert_eq!(chunk.code[3], 1);
         assert_eq!(chunk.code[4], OpCode::Add as u8);
-        assert_eq!(chunk.code[5], OpCode::Return as u8);
+    }
+
+    #[test]
+    fn product() {
+        let mut compiler = Compiler::new("1 * 2");
+        let chunk = compiler.compile();
+
+        assert_eq!(chunk.code[4], OpCode::Multiply as u8);
+    }
+
+    #[test]
+    fn difference() {
+        let mut compiler = Compiler::new("1 - 2");
+        let chunk = compiler.compile();
+
+        assert_eq!(chunk.code[4], OpCode::Subtract as u8);
+    }
+
+    #[test]
+    fn quotient() {
+        let mut compiler = Compiler::new("1 / 2");
+        let chunk = compiler.compile();
+
+        assert_eq!(chunk.code[4], OpCode::Divide as u8);
+    }
+
+    #[test]
+    fn equal() {
+        let mut compiler = Compiler::new("1 == 2");
+        let chunk = compiler.compile();
+
+        assert_eq!(chunk.code[4], OpCode::Equal as u8);
+    }
+
+    #[test]
+    fn not_equal() {
+        let mut compiler = Compiler::new("1 != 2");
+        let chunk = compiler.compile();
+
+        assert_eq!(chunk.code[4], OpCode::Equal as u8);
+        assert_eq!(chunk.code[5], OpCode::Not as u8);
+    }
+
+    #[test]
+    fn greater() {
+        let mut compiler = Compiler::new("1 > 2");
+        let chunk = compiler.compile();
+
+        assert_eq!(chunk.code[4], OpCode::Greater as u8);
+    }
+
+    #[test]
+    fn greater_equal() {
+        let mut compiler = Compiler::new("1 >= 2");
+        let chunk = compiler.compile();
+
+        assert_eq!(chunk.code[4], OpCode::Less as u8);
+        assert_eq!(chunk.code[5], OpCode::Not as u8);
+    }
+
+    #[test]
+    fn less() {
+        let mut compiler = Compiler::new("1 < 2");
+        let chunk = compiler.compile();
+
+        assert_eq!(chunk.code[4], OpCode::Less as u8);
+    }
+
+    #[test]
+    fn less_equal() {
+        let mut compiler = Compiler::new("1 <= 2");
+        let chunk = compiler.compile();
+
+        assert_eq!(chunk.code[4], OpCode::Greater as u8);
+        assert_eq!(chunk.code[5], OpCode::Not as u8);
     }
 
     #[test]
@@ -486,7 +568,6 @@ mod tests {
         let chunk = compiler.compile();
 
         assert_eq!(chunk.code[0], OpCode::True as u8);
-        assert_eq!(chunk.code[1], OpCode::Return as u8);
     }
 
     #[test]
@@ -495,7 +576,6 @@ mod tests {
         let chunk = compiler.compile();
 
         assert_eq!(chunk.code[0], OpCode::False as u8);
-        assert_eq!(chunk.code[1], OpCode::Return as u8);
     }
 
     #[test]
@@ -504,6 +584,5 @@ mod tests {
         let chunk = compiler.compile();
 
         assert_eq!(chunk.code[0], OpCode::Nil as u8);
-        assert_eq!(chunk.code[1], OpCode::Return as u8);
     }
 }

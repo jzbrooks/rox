@@ -67,7 +67,7 @@ impl<'a> Scanner<'a> {
                 let kind = if self.matches("=") {
                     TokenKind::LessEqual
                 } else {
-                    TokenKind::Equal
+                    TokenKind::Less
                 };
                 self.make_token(kind)
             }
@@ -75,7 +75,7 @@ impl<'a> Scanner<'a> {
                 let kind = if self.matches("=") {
                     TokenKind::GreaterEqual
                 } else {
-                    TokenKind::Equal
+                    TokenKind::Greater
                 };
                 self.make_token(kind)
             }
