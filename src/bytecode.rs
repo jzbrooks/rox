@@ -2,6 +2,7 @@
 pub enum Value {
     Float(f64),
     Bool(bool),
+    Str(String),
     Nil,
 }
 
@@ -16,6 +17,14 @@ impl Value {
 
     pub fn is_bool(&self) -> bool {
         if let Value::Bool(_) = *self {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn is_str(&self) -> bool {
+        if let Value::Str(_) = *self {
             true
         } else {
             false
@@ -38,6 +47,14 @@ impl Value {
         }
     }
 
+    pub fn as_str(&self) -> &str {
+        if let Value::Str(s) = self {
+            &*s
+        } else {
+            panic!("Value ({}) is not a string", *self);
+        }
+    }
+
     pub fn is_nil(&self) -> bool {
         if let Value::Nil = *self {
             true
@@ -56,9 +73,10 @@ impl Value {
 
 impl std::fmt::Display for Value {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match *self {
+        match self {
             Value::Float(n) => write!(f, "{}", n),
             Value::Bool(b) => write!(f, "{}", b),
+            Value::Str(s) => write!(f, "{}", s),
             Value::Nil => write!(f, "nil"),
         }
     }

@@ -77,7 +77,22 @@ impl VM {
             self.ip += 1;
 
             match op {
-                OpCode::Add => binop_float!(+),
+                OpCode::Add => {
+                    if self.peek(0).is_float() || self.peek(1).is_float() {
+                        let b = self.stack.pop().unwrap().as_float();
+                        let a = self.stack.pop().unwrap().as_float();
+                        self.stack.push(Value::Float(a + b));
+                    } else if self.peek(0).is_str() || self.peek(1).is_str() {
+                        let b = self.stack.pop();
+                        let a = self.stack.pop();
+                        self.stack.push(Value::Str(
+                            a.unwrap().as_str().to_owned() + b.unwrap().as_str(),
+                        ));
+                    } else {
+                        self.runtime_error(chunk, "Operands must be two numbers or two strings.");
+                        return Err(InterpretError::Runtime);
+                    }
+                }
                 OpCode::Subtract => binop_float!(-),
                 OpCode::Multiply => binop_float!(*),
                 OpCode::Divide => binop_float!(/),
@@ -273,6 +288,31 @@ mod tests {
         let result = vm.run(&chunk)?;
 
         assert_eq!(result, Value::Bool(true));
+
+        Ok(())
+    }
+
+    #[test]
+    fn concatenation() -> Result<(), InterpretError> {
+        let chunk = Chunk::new(
+            vec![
+                OpCode::Constant as u8,
+                0,
+                OpCode::Constant as u8,
+                1,
+                OpCode::Add as u8,
+                OpCode::Return as u8,
+            ],
+            vec![
+                Value::Str(String::from("hello, ")),
+                Value::Str(String::from("world!")),
+            ],
+            vec![123, 123, 123, 123, 123, 123],
+        );
+        let mut vm = VM::new();
+        let result = vm.run(&chunk)?;
+
+        assert_eq!(result, Value::Str(String::from("hello, world!")));
 
         Ok(())
     }

@@ -140,7 +140,7 @@ impl<'a> ParseRuled<'a> for TokenKind {
                 precedence: Precedence::None,
             },
             TokenKind::String => ParseRule {
-                prefix: None,
+                prefix: Some(Compiler::string),
                 infix: None,
                 precedence: Precedence::None,
             },
@@ -429,6 +429,17 @@ impl<'a> Compiler<'a> {
         }
     }
 
+    fn string(&mut self) {
+        let value = self
+            .previous
+            .as_ref()
+            .unwrap()
+            .lexeme
+            .trim_matches('"')
+            .to_string();
+        self.emit_constant(Value::Str(value));
+    }
+
     fn parse_precedence(&mut self, precedence: Precedence) {
         self.advance();
 
@@ -468,6 +479,16 @@ mod tests {
         let chunk = compiler.compile();
 
         assert_eq!(chunk.constants[0], Value::Float(10.0));
+        assert_eq!(chunk.code[0], OpCode::Constant as u8);
+        assert_eq!(chunk.code[1], 0);
+    }
+
+    #[test]
+    fn constant_string() {
+        let mut compiler = Compiler::new(r#""constant""#);
+        let chunk = compiler.compile();
+
+        assert_eq!(chunk.constants[0], Value::Str(String::from("constant")));
         assert_eq!(chunk.code[0], OpCode::Constant as u8);
         assert_eq!(chunk.code[1], 0);
     }
