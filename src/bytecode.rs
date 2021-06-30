@@ -170,11 +170,13 @@ impl Chunk {
     }
 
     fn constant_instruction(&self, name: &str, offset: usize) -> usize {
+        let index = self.code[offset + 1] as usize;
+
         println!(
             "{0} {index:>0width$} '{1}'",
             name,
-            self.constants[self.code[offset + 1] as usize],
-            index = offset + 1,
+            self.constants[index],
+            index = index,
             width = 4,
         );
 
